@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PlanEduca — Gerenciador de Planos de Aula</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0f14;
+      --surface: #13161d;
+      --surface-2: #1a1e28;
+      --border: #252a38;
+      --border-hover: #3a4155;
+      --text: #e8eaf0;
+      --text-muted: #7a8299;
+      --text-dim: #4a5168;
+      --accent: #6ee7b7;
+      --accent-dim: rgba(110,231,183,0.12);
+      --accent-glow: rgba(110,231,183,0.06);
+      --danger: #f87171;
+      --danger-dim: rgba(248,113,113,0.12);
+      --warning: #fbbf24;
+      --blue: #60a5fa;
+      --blue-dim: rgba(96,165,250,0.12);
+      --purple: #c4b5fd;
+      --radius: 8px;
+      --radius-lg: 12px;
+      --shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* LAYOUT */
+    .app-shell {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      min-height: 100vh;
+    }
+
+    /* SIDEBAR */
+    .sidebar {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 32px 0;
+      display: flex;
+      flex-direction: column;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .logo {
+      padding: 0 24px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-mark {
+      font-family: 'DM Serif Display', serif;
+      font-size: 26px;
+      color: var(--text);
+      letter-spacing: -0.5px;
+      display: flex;
+      align-items: baseline;
+      gap: 6px;
+    }
+
+    .logo-mark span {
+      color: var(--accent);
+    }
+
+    .logo-sub {
+      font-size: 11px;
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+      margin-top: 4px;
+    }
+
+    .nav-section {
+      padding: 24px 16px 0;
+      flex: 1;
+    }
+
+    .nav-label {
+      font-size: 10px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+      padding: 0 8px;
+      margin-bottom: 8px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: var(--radius);
+      border: none;
+      background: transparent;
+      color: var(--text-muted);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: left;
+      margin-bottom: 2px;
+    }
+
+    .nav-btn:hover { background: var(--surface-2); color: var(--text); }
+    .nav-btn.active { background: var(--accent-dim); color: var(--accent); }
+    .nav-btn .icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .sidebar-footer {
+      padding: 16px 24px;
+      border-top: 1px solid var(--border);
+    }
+
+    .health-badge {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+    }
+
+    .health-dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--text-dim);
+    }
+
+    .health-dot.ok { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+    .health-dot.err { background: var(--danger); }
+
+    /* MAIN */
+    .main {
+      padding: 40px 48px;
+      max-width: 1100px;
+    }
+
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* PAGE HEADER */
+    .page-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      margin-bottom: 36px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .page-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 38px;
+      color: var(--text);
+      letter-spacing: -1px;
+      line-height: 1;
+    }
+
+    .page-title em {
+      color: var(--accent);
+      font-style: italic;
+    }
+
+    .page-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-top: 8px;
+    }
+
+    /* BUTTONS */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: var(--radius);
+      border: 1px solid transparent;
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #0a1a12;
+      border-color: var(--accent);
+    }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border-color: var(--border);
+    }
+    .btn-ghost:hover { border-color: var(--border-hover); color: var(--text); background: var(--surface-2); }
+
+    .btn-danger {
+      background: var(--danger-dim);
+      color: var(--danger);
+      border-color: transparent;
+    }
+    .btn-danger:hover { background: rgba(248,113,113,0.22); }
+
+    .btn-ai {
+      background: linear-gradient(135deg, rgba(110,231,183,0.15), rgba(192,132,252,0.15));
+      color: var(--accent);
+      border-color: rgba(110,231,183,0.3);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-ai:hover { filter: brightness(1.15); transform: translateY(-1px); }
+    .btn-ai.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn-icon { padding: 8px; min-width: 36px; justify-content: center; }
+
+    /* SPINNER */
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid currentColor;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* FILTERS BAR */
+    .filters-bar {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+      align-items: center;
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .search-wrap .icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 15px;
+    }
+
+    input, select, textarea {
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      font-family: 'Instrument Sans', sans-serif;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.15s;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-glow);
+    }
+
+    .input { padding: 10px 14px; width: 100%; }
+    .search-wrap input { padding-left: 38px; }
+
+    select { padding: 10px 14px; cursor: pointer; }
+    select option { background: var(--surface-2); }
+
+    textarea { padding: 12px 14px; resize: vertical; min-height: 80px; }
+
+    /* SORT CONTROLS */
+    .sort-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .sort-btn {
+      padding: 4px 10px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: 'DM Mono', monospace;
+      transition: all 0.15s;
+    }
+    .sort-btn.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(110,231,183,0.3); }
+    .sort-btn:hover:not(.active) { border-color: var(--border-hover); color: var(--text); }
+
+    /* CARD GRID */
+    .plans-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .plan-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      cursor: pointer;
+      transition: all 0.2s;
+      position: relative;
+    }
+
+    .plan-card:hover {
+      border-color: var(--border-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow);
+    }
+
+    .plan-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .plan-card-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 18px;
+      color: var(--text);
+      line-height: 1.3;
+    }
+
+    .plan-card-actions {
+      display: flex;
+      gap: 6px;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    .plan-card:hover .plan-card-actions { opacity: 1; }
+
+    .plan-card-discipline {
+      display: inline-block;
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      color: var(--blue);
+      background: var(--blue-dim);
+      padding: 3px 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+    }
+
+    .plan-card-summary {
+      font-size: 13px;
+      color: var(--text-muted);
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 14px;
+    }
+
+    .plan-card-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag-list { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    .tag {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      padding: 3px 8px;
+      border-radius: 4px;
+      background: var(--accent-dim);
+      color: var(--accent);
+    }
+
+    .plan-date {
+      font-size: 12px;
+      color: var(--text-dim);
+      font-family: 'DM Mono', monospace;
+    }
+
+    /* EMPTY STATE */
+    .empty-state {
+      text-align: center;
+      padding: 80px 40px;
+      color: var(--text-muted);
+    }
+
+    .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+    .empty-title { font-family: 'DM Serif Display', serif; font-size: 24px; color: var(--text-muted); margin-bottom: 8px; }
+    .empty-sub { font-size: 14px; }
+
+    /* PAGINATION */
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: center;
+    }
+
+    .page-num {
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'DM Mono', monospace;
+    }
+    .page-num.active { background: var(--accent-dim); color: var(--accent); border-color: rgba(110,231,183,0.3); }
+    .page-num:hover:not(.active) { border-color: var(--border-hover); color: var(--text); }
+
+    /* MODAL */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .modal-overlay.open { display: flex; }
+
+    .modal {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 680px;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+      animation: modalIn 0.2s ease;
+    }
+
+    @keyframes modalIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .modal-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 22px;
+    }
+
+    .modal-close {
+      width: 32px; height: 32px;
+      border-radius: var(--radius);
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+    .modal-close:hover { background: var(--surface-2); color: var(--text); }
+
+    .modal-body { padding: 28px; }
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* FORM */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-grid .full { grid-column: 1 / -1; }
+
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+
+    label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-family: 'DM Mono', monospace;
+    }
+
+    .field-error {
+      font-size: 12px;
+      color: var(--danger);
+      display: none;
+    }
+    .form-group.has-error input,
+    .form-group.has-error select,
+    .form-group.has-error textarea {
+      border-color: var(--danger);
+    }
+    .form-group.has-error .field-error { display: block; }
+
+    /* AI CARD */
+    .ai-panel {
+      background: linear-gradient(135deg, rgba(110,231,183,0.06), rgba(192,132,252,0.06));
+      border: 1px solid rgba(110,231,183,0.2);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+
+    .ai-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .ai-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.05em;
+    }
+
+    .ai-pulse {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .ai-pulse.active { animation: pulse 1.2s ease infinite; }
+
+    .ai-hint { font-size: 13px; color: var(--text-muted); margin-bottom: 14px; }
+
+    /* AI LOADING */
+    .ai-loading-bar {
+      height: 2px;
+      background: var(--border);
+      border-radius: 1px;
+      overflow: hidden;
+      margin-top: 12px;
+      display: none;
+    }
+    .ai-loading-bar.show { display: block; }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(400%); }
+    }
+
+    .ai-loading-fill {
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: shimmer 1.5s ease infinite;
+    }
+
+    /* ERROR TOAST */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      font-size: 14px;
+      max-width: 360px;
+      box-shadow: var(--shadow);
+      z-index: 200;
+      display: none;
+      gap: 10px;
+      align-items: center;
+    }
+    .toast.show { display: flex; animation: slideUp 0.3s ease; }
+    .toast.success { border-color: rgba(110,231,183,0.3); }
+    .toast.error { border-color: rgba(248,113,113,0.3); }
+
+    @keyframes slideUp {
+      from { transform: translateY(12px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* STATS ROW */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 36px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+    }
+
+    .stat-value {
+      font-family: 'DM Serif Display', serif;
+      font-size: 36px;
+      color: var(--text);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    /* DETAIL VIEW */
+    .detail-section { margin-bottom: 24px; }
+    .detail-section-title {
+      font-size: 11px;
+      font-family: 'DM Mono', monospace;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+      margin-bottom: 8px;
+    }
+    .detail-content {
+      color: var(--text);
+      line-height: 1.7;
+      font-size: 15px;
+      white-space: pre-wrap;
+    }
+
+    /* RESPONSIVE */
+    @media (max-width: 768px) {
+      .app-shell { grid-template-columns: 1fr; }
+      .sidebar { position: relative; height: auto; flex-direction: row; flex-wrap: wrap; padding: 16px; }
+      .main { padding: 24px 16px; }
+      .form-grid { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: 1fr; }
+      .plans-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-shell">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">Plan<span>Educa</span></div>
+      <div class="logo-sub">Gestão Pedagógica</div>
+    </div>
+    <nav class="nav-section">
+      <div class="nav-label">Menu</div>
+      <button class="nav-btn active" onclick="navigate('list')" id="nav-list">
+        <span class="icon">📋</span> Planos de Aula
+      </button>
+      <button class="nav-btn" onclick="navigate('create')" id="nav-create">
+        <span class="icon">✦</span> Novo Plano
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="health-badge">
+        <div class="health-dot" id="health-dot"></div>
+        <span id="health-text">verificando...</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main">
+
+    <!-- LIST PAGE -->
+    <section class="page active" id="page-list">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title">Planos de <em>Aula</em></h1>
+          <p class="page-subtitle">Organize e consulte todos os planos pedagógicos</p>
+        </div>
+        <button class="btn btn-primary" onclick="navigate('create')">
+          <span>✦</span> Novo Plano
+        </button>
+      </div>
+
+      <div class="stats-row" id="stats-row">
+        <div class="stat-card">
+          <div class="stat-value" id="stat-total">—</div>
+          <div class="stat-label">Planos Cadastrados</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-disciplines">—</div>
+          <div class="stat-label">Disciplinas</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="stat-tags">—</div>
+          <div class="stat-label">Tags Únicas</div>
+        </div>
+      </div>
+
+      <div class="filters-bar">
+        <div class="search-wrap" style="flex:2">
+          <span class="icon">🔍</span>
+          <input class="input" type="text" id="search-input" placeholder="Buscar por título..." oninput="debounceSearch()" />
+        </div>
+        <select id="filter-discipline" onchange="loadPlans()" style="min-width:160px">
+          <option value="">Todas as disciplinas</option>
+        </select>
+        <select id="filter-tag" onchange="loadPlans()" style="min-width:140px">
+          <option value="">Todas as tags</option>
+        </select>
+        <input type="date" id="filter-date" onchange="loadPlans()" class="input" style="width:auto" title="Filtrar por data" />
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">Limpar</button>
+      </div>
+
+      <div class="sort-controls">
+        <span>Ordenar por:</span>
+        <button class="sort-btn active" data-sort="created_at" onclick="setSort('created_at')">Data de cadastro</button>
+        <button class="sort-btn" data-sort="title" onclick="setSort('title')">Título</button>
+        <button class="sort-btn" data-sort="scheduled_date" onclick="setSort('scheduled_date')">Data prevista</button>
+        <button class="sort-btn" id="order-btn" onclick="toggleOrder()">↓ desc</button>
+      </div>
+
+      <div class="plans-grid" id="plans-grid">
+        <div class="empty-state" style="grid-column:1/-1">
+          <div class="spinner" style="margin:0 auto 16px"></div>
+        </div>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <!-- CREATE/EDIT PAGE -->
+    <section class="page" id="page-create">
+      <div class="page-header">
+        <div>
+          <h1 class="page-title" id="form-page-title">Novo <em>Plano</em></h1>
+          <p class="page-subtitle" id="form-page-sub">Cadastre um plano de aula completo</p>
+        </div>
+        <button class="btn btn-ghost" onclick="navigate('list')">← Voltar</button>
+      </div>
+
+      <!-- AI PANEL -->
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-label">
+            <div class="ai-pulse" id="ai-pulse"></div>
+            ✦ Smart Assist — IA Pedagógica
+          </div>
+        </div>
+        <p class="ai-hint">Preencha o Título, Disciplina e Ementa. Clique em "Gerar Recomendações" para receber sugestões de conteúdo, tópicos e tags geradas por IA.</p>
+        <button class="btn btn-ai" id="ai-btn" onclick="runSmartAssist()">
+          <span id="ai-btn-icon">✦</span>
+          <span id="ai-btn-text">Gerar Recomendações com IA</span>
+        </button>
+        <div class="ai-loading-bar" id="ai-loading-bar">
+          <div class="ai-loading-fill"></div>
+        </div>
+        <div id="ai-error" style="margin-top:10px;font-size:13px;color:var(--danger);display:none"></div>
+      </div>
+
+      <div class="form-grid">
+        <div class="form-group full">
+          <label for="f-title">Título da Aula *</label>
+          <input class="input" type="text" id="f-title" placeholder="Ex: Introdução ao Protocolo OSPF" />
+          <span class="field-error">Mínimo 3 caracteres</span>
+        </div>
+
+        <div class="form-group">
+          <label for="f-discipline">Disciplina *</label>
+          <input class="input" type="text" id="f-discipline" placeholder="Ex: Redes de Computadores" />
+          <span class="field-error">Mínimo 2 caracteres</span>
+        </div>
+
+        <div class="form-group">
+          <label for="f-date">Data Prevista</label>
+          <input class="input" type="date" id="f-date" />
+        </div>
+
+        <div class="form-group full">
+          <label for="f-objective">Objetivo da Aula *</label>
+          <textarea id="f-objective" placeholder="Descreva o objetivo pedagógico desta aula..."></textarea>
+          <span class="field-error">Mínimo 5 caracteres</span>
+        </div>
+
+        <div class="form-group full">
+          <label for="f-summary">Ementa / Resumo *</label>
+          <textarea id="f-summary" placeholder="Descreva o conteúdo e ementa da aula..." style="min-height:100px"></textarea>
+          <span class="field-error">Mínimo 5 caracteres</span>
+        </div>
+
+        <div class="form-group full">
+          <label for="f-contents">Conteúdos <span style="color:var(--accent);font-size:11px">← preenchido pelo Smart Assist</span></label>
+          <textarea id="f-contents" placeholder="Tópicos e conteúdos a serem abordados..." style="min-height:100px"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label for="f-resources">Recursos de Apoio <span style="color:var(--accent);font-size:11px">← preenchido pelo Smart Assist</span></label>
+          <textarea id="f-resources" placeholder="Livros, sites, vídeos e outros recursos..." style="min-height:80px"></textarea>
+        </div>
+
+        <div class="form-group full">
+          <label for="f-tags">Tags <span style="color:var(--text-muted);font-weight:400">(separadas por vírgula)</span> <span style="color:var(--accent);font-size:11px">← 3 tags sugeridas pela IA</span></label>
+          <input class="input" type="text" id="f-tags" placeholder="python, iniciantes, programação" />
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;gap:12px;margin-top:28px;padding-top:24px;border-top:1px solid var(--border)">
+        <button class="btn btn-ghost" onclick="navigate('list')">Cancelar</button>
+        <button class="btn btn-primary" onclick="savePlan()">
+          <span id="save-icon">💾</span>
+          <span id="save-text">Salvar Plano</span>
+        </button>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="modal-overlay" id="detail-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div style="flex:1">
+        <div style="font-size:11px;font-family:'DM Mono',monospace;color:var(--text-dim);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px" id="modal-discipline-label"></div>
+        <div class="modal-title" id="modal-title"></div>
+      </div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-danger btn-sm" id="modal-delete-btn">🗑 Excluir</button>
+      <button class="btn btn-ghost btn-sm" id="modal-edit-btn">✏️ Editar</button>
+      <button class="btn btn-ghost btn-sm" onclick="closeModal()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal" style="max-width:400px">
+    <div class="modal-header">
+      <div class="modal-title">Confirmar exclusão</div>
+      <button class="modal-close" onclick="closeConfirm()">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="color:var(--text-muted)">Tem certeza que deseja excluir este plano de aula? Esta ação não pode ser desfeita.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost btn-sm" onclick="closeConfirm()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" id="confirm-delete-btn">Excluir</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="toast-icon"></span>
+  <span id="toast-msg"></span>
+</div>
+
+<script>
+const API = '/api';
+let state = {
+  page: 1,
+  per_page: 9,
+  sort_by: 'created_at',
+  order: 'desc',
+  editingId: null,
+  currentDetailId: null,
+  searchTimer: null,
+};
+
+// ────────────────────────────────────────────────
+// NAVIGATION
+// ────────────────────────────────────────────────
+function navigate(page, planId = null) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+
+  if (page === 'list') {
+    document.getElementById('page-list').classList.add('active');
+    document.getElementById('nav-list').classList.add('active');
+    loadPlans();
+    loadFilterOptions();
+  } else if (page === 'create') {
+    document.getElementById('page-create').classList.add('active');
+    document.getElementById('nav-create').classList.add('active');
+    state.editingId = null;
+    document.getElementById('form-page-title').innerHTML = 'Novo <em>Plano</em>';
+    document.getElementById('form-page-sub').textContent = 'Cadastre um plano de aula completo';
+    clearForm();
+  } else if (page === 'edit' && planId) {
+    document.getElementById('page-create').classList.add('active');
+    document.getElementById('nav-create').classList.add('active');
+    state.editingId = planId;
+    document.getElementById('form-page-title').innerHTML = 'Editar <em>Plano</em>';
+    document.getElementById('form-page-sub').textContent = 'Atualize os dados do plano de aula';
+    loadPlanIntoForm(planId);
+    closeModal();
+  }
+}
+
+// ────────────────────────────────────────────────
+// HEALTH CHECK
+// ────────────────────────────────────────────────
+async function checkHealth() {
+  try {
+    const r = await fetch(`${API.replace('/api','')}/health`);
+    const data = await r.json();
+    const dot = document.getElementById('health-dot');
+    const txt = document.getElementById('health-text');
+    if (data.status === 'healthy') {
+      dot.className = 'health-dot ok';
+      txt.textContent = 'API conectada';
+    } else {
+      dot.className = 'health-dot err';
+      txt.textContent = 'API degradada';
+    }
+  } catch {
+    document.getElementById('health-dot').className = 'health-dot err';
+    document.getElementById('health-text').textContent = 'API offline';
+  }
+}
+
+// ────────────────────────────────────────────────
+// LOAD PLANS
+// ────────────────────────────────────────────────
+async function loadPlans() {
+  const search = document.getElementById('search-input').value.trim();
+  const discipline = document.getElementById('filter-discipline').value;
+  const tag = document.getElementById('filter-tag').value;
+  const date = document.getElementById('filter-date').value;
+
+  const params = new URLSearchParams({
+    page: state.page,
+    per_page: state.per_page,
+    sort_by: state.sort_by,
+    order: state.order,
+  });
+  if (search) params.set('search', search);
+  if (discipline) params.set('discipline', discipline);
+  if (tag) params.set('tag', tag);
+  if (date) params.set('scheduled_date', date);
+
+  try {
+    const r = await fetch(`${API}/lesson-plans?${params}`);
+    const data = await r.json();
+    renderPlans(data.items);
+    renderPagination(data.pagination);
+    updateStats(data.pagination.total);
+  } catch (e) {
+    showToast('Erro ao carregar planos', 'error');
+  }
+}
+
+async function updateStats(total) {
+  document.getElementById('stat-total').textContent = total;
+  try {
+    const [dResp, tResp] = await Promise.all([
+      fetch(`${API}/lesson-plans/disciplines`),
+      fetch(`${API}/lesson-plans/tags`),
+    ]);
+    const disciplines = await dResp.json();
+    const tags = await tResp.json();
+    document.getElementById('stat-disciplines').textContent = disciplines.length;
+    document.getElementById('stat-tags').textContent = tags.length;
+  } catch {}
+}
+
+async function loadFilterOptions() {
+  try {
+    const [dResp, tResp] = await Promise.all([
+      fetch(`${API}/lesson-plans/disciplines`),
+      fetch(`${API}/lesson-plans/tags`),
+    ]);
+    const disciplines = await dResp.json();
+    const tags = await tResp.json();
+
+    const dSel = document.getElementById('filter-discipline');
+    const tSel = document.getElementById('filter-tag');
+    const dVal = dSel.value, tVal = tSel.value;
+
+    dSel.innerHTML = '<option value="">Todas as disciplinas</option>' +
+      disciplines.map(d => `<option value="${esc(d)}" ${d===dVal?'selected':''}>${esc(d)}</option>`).join('');
+    tSel.innerHTML = '<option value="">Todas as tags</option>' +
+      tags.map(t => `<option value="${esc(t)}" ${t===tVal?'selected':''}>${esc(t)}</option>`).join('');
+  } catch {}
+}
+
+function renderPlans(plans) {
+  const grid = document.getElementById('plans-grid');
+  if (!plans.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">📂</div>
+      <div class="empty-title">Nenhum plano encontrado</div>
+      <p class="empty-sub">Tente ajustar os filtros ou crie um novo plano.</p>
+    </div>`;
+    return;
+  }
+  grid.innerHTML = plans.map(p => `
+    <div class="plan-card" onclick="openDetail(${p.id})">
+      <div class="plan-card-header">
+        <div class="plan-card-title">${esc(p.title)}</div>
+        <div class="plan-card-actions" onclick="event.stopPropagation()">
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="navigate('edit', ${p.id})">✏️</button>
+          <button class="btn btn-danger btn-icon btn-sm" title="Excluir" onclick="confirmDelete(${p.id})">🗑</button>
+        </div>
+      </div>
+      <div class="plan-card-discipline">${esc(p.discipline)}</div>
+      <p class="plan-card-summary">${esc(p.summary)}</p>
+      <div class="plan-card-footer">
+        <div class="tag-list">${(p.tags||[]).slice(0,3).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <span class="plan-date">${p.scheduled_date ? fmtDate(p.scheduled_date) : ''}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderPagination(pg) {
+  const el = document.getElementById('pagination');
+  if (pg.pages <= 1) { el.innerHTML = ''; return; }
+  let html = '';
+  if (pg.has_prev) html += `<button class="page-num" onclick="goPage(${pg.page-1})">←</button>`;
+  for (let i = 1; i <= pg.pages; i++) {
+    if (i === 1 || i === pg.pages || Math.abs(i - pg.page) <= 1) {
+      html += `<button class="page-num ${i===pg.page?'active':''}" onclick="goPage(${i})">${i}</button>`;
+    } else if (Math.abs(i - pg.page) === 2) {
+      html += `<span style="color:var(--text-dim);padding:0 4px">…</span>`;
+    }
+  }
+  if (pg.has_next) html += `<button class="page-num" onclick="goPage(${pg.page+1})">→</button>`;
+  el.innerHTML = html;
+}
+
+function goPage(n) { state.page = n; loadPlans(); }
+
+// ────────────────────────────────────────────────
+// SORT / FILTER
+// ────────────────────────────────────────────────
+function setSort(col) {
+  state.sort_by = col;
+  state.page = 1;
+  document.querySelectorAll('.sort-btn[data-sort]').forEach(b =>
+    b.classList.toggle('active', b.dataset.sort === col));
+  loadPlans();
+}
+
+function toggleOrder() {
+  state.order = state.order === 'desc' ? 'asc' : 'desc';
+  document.getElementById('order-btn').textContent = state.order === 'desc' ? '↓ desc' : '↑ asc';
+  state.page = 1;
+  loadPlans();
+}
+
+function clearFilters() {
+  document.getElementById('search-input').value = '';
+  document.getElementById('filter-discipline').value = '';
+  document.getElementById('filter-tag').value = '';
+  document.getElementById('filter-date').value = '';
+  state.page = 1;
+  loadPlans();
+}
+
+function debounceSearch() {
+  clearTimeout(state.searchTimer);
+  state.searchTimer = setTimeout(() => { state.page = 1; loadPlans(); }, 400);
+}
+
+// ────────────────────────────────────────────────
+// DETAIL MODAL
+// ────────────────────────────────────────────────
+async function openDetail(id) {
+  state.currentDetailId = id;
+  try {
+    const r = await fetch(`${API}/lesson-plans/${id}`);
+    const p = await r.json();
+
+    document.getElementById('modal-discipline-label').textContent = p.discipline;
+    document.getElementById('modal-title').textContent = p.title;
+
+    const tags = (p.tags||[]).map(t => `<span class="tag">${esc(t)}</span>`).join(' ');
+
+    document.getElementById('modal-body').innerHTML = `
+      <div class="detail-section">
+        <div class="detail-section-title">Objetivo</div>
+        <div class="detail-content">${esc(p.objective)}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Ementa / Resumo</div>
+        <div class="detail-content">${esc(p.summary)}</div>
+      </div>
+      ${p.contents ? `<div class="detail-section">
+        <div class="detail-section-title">Conteúdos</div>
+        <div class="detail-content">${esc(p.contents)}</div>
+      </div>` : ''}
+      ${p.support_resources ? `<div class="detail-section">
+        <div class="detail-section-title">Recursos de Apoio</div>
+        <div class="detail-content">${esc(p.support_resources)}</div>
+      </div>` : ''}
+      ${p.scheduled_date ? `<div class="detail-section">
+        <div class="detail-section-title">Data Prevista</div>
+        <div class="detail-content">${fmtDate(p.scheduled_date)}</div>
+      </div>` : ''}
+      ${tags ? `<div class="detail-section">
+        <div class="detail-section-title">Tags</div>
+        <div class="tag-list" style="margin-top:4px">${tags}</div>
+      </div>` : ''}
+      <div style="font-size:12px;color:var(--text-dim);font-family:'DM Mono',monospace;margin-top:16px">
+        Cadastrado em ${fmtDatetime(p.created_at)}
+      </div>
+    `;
+
+    document.getElementById('modal-edit-btn').onclick = () => navigate('edit', id);
+    document.getElementById('modal-delete-btn').onclick = () => confirmDelete(id);
+
+    document.getElementById('detail-modal').classList.add('open');
+  } catch {
+    showToast('Erro ao carregar plano', 'error');
+  }
+}
+
+function closeModal() {
+  document.getElementById('detail-modal').classList.remove('open');
+}
+
+// ────────────────────────────────────────────────
+// DELETE
+// ────────────────────────────────────────────────
+let pendingDeleteId = null;
+
+function confirmDelete(id) {
+  pendingDeleteId = id;
+  closeModal();
+  document.getElementById('confirm-modal').classList.add('open');
+}
+
+function closeConfirm() {
+  document.getElementById('confirm-modal').classList.remove('open');
+  pendingDeleteId = null;
+}
+
+document.getElementById('confirm-delete-btn').onclick = async () => {
+  if (!pendingDeleteId) return;
+  try {
+    const r = await fetch(`${API}/lesson-plans/${pendingDeleteId}`, { method: 'DELETE' });
+    if (!r.ok) throw new Error();
+    closeConfirm();
+    showToast('Plano excluído com sucesso', 'success');
+    loadPlans();
+    loadFilterOptions();
+  } catch {
+    showToast('Erro ao excluir plano', 'error');
+  }
+};
+
+// ────────────────────────────────────────────────
+// FORM
+// ────────────────────────────────────────────────
+function clearForm() {
+  ['f-title','f-discipline','f-objective','f-summary','f-contents','f-resources','f-tags'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-date').value = '';
+  document.querySelectorAll('.form-group.has-error').forEach(g => g.classList.remove('has-error'));
+  document.getElementById('ai-error').style.display = 'none';
+}
+
+async function loadPlanIntoForm(id) {
+  try {
+    const r = await fetch(`${API}/lesson-plans/${id}`);
+    const p = await r.json();
+    document.getElementById('f-title').value = p.title || '';
+    document.getElementById('f-discipline').value = p.discipline || '';
+    document.getElementById('f-objective').value = p.objective || '';
+    document.getElementById('f-summary').value = p.summary || '';
+    document.getElementById('f-contents').value = p.contents || '';
+    document.getElementById('f-resources').value = p.support_resources || '';
+    document.getElementById('f-tags').value = (p.tags||[]).join(', ');
+    document.getElementById('f-date').value = p.scheduled_date || '';
+  } catch {
+    showToast('Erro ao carregar dados do plano', 'error');
+  }
+}
+
+function validateForm() {
+  let valid = true;
+  const checks = [
+    { id: 'f-title', min: 3 },
+    { id: 'f-discipline', min: 2 },
+    { id: 'f-objective', min: 5 },
+    { id: 'f-summary', min: 5 },
+  ];
+  checks.forEach(({ id, min }) => {
+    const el = document.getElementById(id);
+    const group = el.closest('.form-group');
+    if (el.value.trim().length < min) {
+      group.classList.add('has-error');
+      valid = false;
+    } else {
+      group.classList.remove('has-error');
+    }
+  });
+  return valid;
+}
+
+async function savePlan() {
+  if (!validateForm()) { showToast('Corrija os erros antes de salvar', 'error'); return; }
+
+  const tagsRaw = document.getElementById('f-tags').value;
+  const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean);
+
+  const payload = {
+    title: document.getElementById('f-title').value.trim(),
+    discipline: document.getElementById('f-discipline').value.trim(),
+    objective: document.getElementById('f-objective').value.trim(),
+    summary: document.getElementById('f-summary').value.trim(),
+    contents: document.getElementById('f-contents').value.trim() || null,
+    support_resources: document.getElementById('f-resources').value.trim() || null,
+    scheduled_date: document.getElementById('f-date').value || null,
+    tags,
+  };
+
+  const saveBtn = document.getElementById('save-text');
+  const saveIcon = document.getElementById('save-icon');
+  saveBtn.textContent = 'Salvando...';
+  saveIcon.innerHTML = '<div class="spinner"></div>';
+
+  try {
+    const url = state.editingId
+      ? `${API}/lesson-plans/${state.editingId}`
+      : `${API}/lesson-plans`;
+    const method = state.editingId ? 'PUT' : 'POST';
+
+    const r = await fetch(url, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(JSON.stringify(err.errors || err.error));
+    }
+
+    showToast(state.editingId ? 'Plano atualizado!' : 'Plano criado com sucesso!', 'success');
+    navigate('list');
+  } catch (e) {
+    showToast('Erro ao salvar: ' + e.message, 'error');
+  } finally {
+    saveBtn.textContent = 'Salvar Plano';
+    saveIcon.textContent = '💾';
+  }
+}
+
+// ────────────────────────────────────────────────
+// SMART ASSIST
+// ────────────────────────────────────────────────
+async function runSmartAssist() {
+  const title = document.getElementById('f-title').value.trim();
+  const discipline = document.getElementById('f-discipline').value.trim();
+  const summary = document.getElementById('f-summary').value.trim();
+
+  if (!title || !discipline || !summary) {
+    document.getElementById('ai-error').textContent = 'Preencha Título, Disciplina e Ementa antes de gerar recomendações.';
+    document.getElementById('ai-error').style.display = 'block';
+    return;
+  }
+
+  document.getElementById('ai-error').style.display = 'none';
+  const btn = document.getElementById('ai-btn');
+  const icon = document.getElementById('ai-btn-icon');
+  const text = document.getElementById('ai-btn-text');
+  const bar = document.getElementById('ai-loading-bar');
+  const pulse = document.getElementById('ai-pulse');
+
+  btn.classList.add('loading');
+  icon.innerHTML = '<div class="spinner"></div>';
+  text.textContent = 'Consultando IA Pedagógica...';
+  bar.classList.add('show');
+  pulse.classList.add('active');
+
+  try {
+    const r = await fetch(`${API}/lesson-plans/smart-assist`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, discipline, summary }),
+    });
+
+    if (!r.ok) {
+      const err = await r.json();
+      throw new Error(err.error || 'Erro na IA');
+    }
+
+    const data = await r.json();
+
+    if (data.complementary_contents) {
+      document.getElementById('f-contents').value = data.complementary_contents +
+        (data.related_topics ? '\n\nTópicos relacionados:\n' + data.related_topics : '');
+    }
+    if (data.support_resources) {
+      document.getElementById('f-resources').value = data.support_resources;
+    }
+    if (data.suggested_tags && data.suggested_tags.length) {
+      document.getElementById('f-tags').value = data.suggested_tags.join(', ');
+    }
+
+    showToast('✦ Recomendações geradas com sucesso!', 'success');
+  } catch (e) {
+    document.getElementById('ai-error').textContent = 'Falha no serviço de IA: ' + e.message + '. Tente novamente.';
+    document.getElementById('ai-error').style.display = 'block';
+    showToast('Erro no Smart Assist', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    icon.textContent = '✦';
+    text.textContent = 'Gerar Recomendações com IA';
+    bar.classList.remove('show');
+    pulse.classList.remove('active');
+  }
+}
+
+// ────────────────────────────────────────────────
+// UTILS
+// ────────────────────────────────────────────────
+function esc(str) {
+  if (!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  return new Date(d + 'T00:00:00').toLocaleDateString('pt-BR');
+}
+
+function fmtDatetime(d) {
+  if (!d) return '';
+  return new Date(d).toLocaleString('pt-BR');
+}
+
+function showToast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  document.getElementById('toast-icon').textContent = type === 'success' ? '✓' : '✕';
+  document.getElementById('toast-icon').style.color = type === 'success' ? 'var(--accent)' : 'var(--danger)';
+  document.getElementById('toast-msg').textContent = msg;
+  el.className = `toast show ${type}`;
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+
+// Close modal on overlay click
+document.getElementById('detail-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('confirm-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// ────────────────────────────────────────────────
+// INIT
+// ────────────────────────────────────────────────
+checkHealth();
+setInterval(checkHealth, 30000);
+loadPlans();
+loadFilterOptions();
+</script>
+</body>
+</html>
