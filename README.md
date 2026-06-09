@@ -2,9 +2,6 @@
 
 Sistema web para gerenciamento de planos de aula com arquitetura frontend + backend desacoplada, integração preparada para IA generativa, Docker Compose e observabilidade.
 
-🎥 Vídeo de Demonstração
-https://youtu.be/sDbvvRCC9Ns?si=TEr1mOVe6gX7q6rC
-
 
 ✨ Visão Geral
 
